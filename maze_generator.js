@@ -88,14 +88,22 @@
 
     if (topEdgeTile(startingTileRow)) {
       tileOptions.push(verticalUpDown);
-      tileOptions.push(verticalUpTurnLeft);
-      tileOptions.push(verticalUpTurnRight);
+      if (!(leftEdgeTile(startingTileColumn))) {
+        tileOptions.push(verticalUpTurnLeft);
+      }
+      if (!(rightEdgeTile(startingTileColumn))) {
+        tileOptions.push(verticalUpTurnRight);
+      }
     }
 
     if (bottomEdgeTile(startingTileRow)) {
       tileOptions.push(verticalDownUp);
-      tileOptions.push(verticalDownTurnLeft);
-      tileOptions.push(verticalDownTurnRight);
+      if (!(leftEdgeTile(startingTileColumn))) {
+        tileOptions.push(verticalDownTurnLeft);
+      }
+      if (!(rightEdgeTile(startingTileColumn))) {
+        tileOptions.push(verticalDownTurnRight);
+      }
     }
 
     if (leftEdgeTile(startingTileColumn)) {
@@ -106,9 +114,6 @@
       if (!(topEdgeTile(startingTileRow))) {
         tileOptions.push(horizontalLeftTurnUp);
       }
-      tileOptions = tileOptions.filter(function (e) {
-        return e !== verticalDownTurnLeft
-      })
     }
 
     if (rightEdgeTile(startingTileColumn)) {
@@ -119,9 +124,6 @@
       if (!(bottomEdgeTile(startingTileRow))) {
         tileOptions.push(horizontalRightTurnDown);
       }
-      tileOptions = tileOptions.filter(function (e) {
-        return e !== verticalUpTurnRight
-      })
     }
 
     return tileOptions;
