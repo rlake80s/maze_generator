@@ -186,9 +186,6 @@
       [verticalUpTurnLeft]: [0,-1],
       [verticalUpTurnRight]: [0,1]
     }
-    // debugger;
-    console.log("tile", tile)
-    console.log("nextTileMap[tile]", tile, nextTileMap[tile]);
 
     return nextTileMap[tile];
   }
@@ -196,31 +193,24 @@
   function getDirection(newCoordinates, oldCoordinates) {
     let rowChange = oldCoordinates[0] - newCoordinates[0]
     let columnChange = oldCoordinates[1] - newCoordinates[1]
-    // console.log("coordinates ", coordinates);
+
     if (rowChange === -1) {
-      // console.log("direction ", verticalUpDirection);
       return verticalUpDirection
     }
     if (rowChange === 1) {
-      // console.log("direction ", verticalDownDirection);
       return verticalDownDirection
     }
     if (columnChange === -1) {
-      // console.log("direction ", horizontalLeftDirection);
       return horizontalLeftDirection
     }
     if (columnChange === 1) {
-      // console.log("direction ", horizontalRightDirection);
       return horizontalRightDirection
     }
   }
 
   function calculateNextTileCoordinates(startingTileRow, startingTileColumn, modCoordinates) {
-    // console.log(grid)
     let rowMod = modCoordinates[0];
     let columnMod = modCoordinates[1];
-
-    // console.log("mod array ", modCoordinates);
 
     let newRowTile = startingTileRow + rowMod;
     let newColumnTile = startingTileColumn + columnMod;
@@ -240,9 +230,8 @@
       return
     }
     for (option of nextTileOptions) {
-      // console.log("option ", option)
       let coordinates = calculateNextTileCoordinates(tileRow, tileColumn, option)
-      // console.log("coordinates ", coordinates)
+
       if (coordinates !== undefined) {
         nextTileCoordinates.push(coordinates);
       } else {
@@ -251,12 +240,8 @@
     }
 
     if (previousTile !== undefined) {
-      console.log("otherNextTileCoordinates ", nextTileCoordinates)
-      console.log("previous tile coordinates ", previousTile[0], previousTile[1]);
       nextTileCoordinates = nextTileCoordinates.filter(function(e) { return e !== [previousTile[0], previousTile[1]]})
     }
-
-    console.log("nextTileCoordinates ", nextTileCoordinates[0])
 
     return nextTileCoordinates[0]
   }
@@ -271,49 +256,18 @@
       return undefined;
     }
 
-    // then pass the direction into getNextTileOptions which should only return a single coordinate
-    
-    // let nextTileOptions = getNextTileOptions(lastTile);
     let nextTileMod = getNextTileOptions(lastTile);
     let nextTileCoordinates = calculateNextTileCoordinates(tileRow, tileColumn, nextTileMod)
-    // console.log("nextTileOptions", nextTileOptions);
-    // console.log("lastTile ", lastTile)
-    // console.log("nextTileOptions ", nextTileOptions)
-
-    // let nextTileCoordinates = filterNextTileCoordinates(tileRow, tileColumn, previousTile, nextTileOptions)
-
-    // console.log("nextTileCoordinates ", nextTileCoordinates);
+   
     if (nextTileCoordinates === undefined) {
       return
     }
-    // let nextTileDirection = getDirection(nextTileCoordinates);
-
-    // let firstNextTile;
-    // if (nextTileCoordinates !== undefined) {
-      // nextTile = grid[nextTileCoordinates[0]][nextTileCoordinates[1]];
-    // }
-
-    // let secondNextTileCoordinates = calculateNextTileCoordinates(startingTileRow, startingTileColumn, nextTileOptions[1]);
-    // let secondNextTileDirection = getDirection(nextTileOptions[1]);
-
-    // let secondNextTile;
-    // if (secondNextTileCoordinates !== undefined) {
-    //   secondNextTile = grid[secondNextTileCoordinates[0]][secondNextTileCoordinates[1]];
-    // }
 
     let nextTile = grid[nextTileCoordinates[0]][nextTileCoordinates[1]]
     
     if (nextTile === blankTile) {
-      // console.log("firstNextTileCoordinates ", firstNextTileCoordinates)
-      // console.log("firstNextTileDirection ", firstNextTileDirection)
       return nextTileCoordinates;
     }
-
-    // if (secondNextTile === '') {
-    //   console.log("secondNextTileCoordinates ", secondNextTileCoordinates)
-    //   console.log("secondNextTileDirection ", secondNextTileDirection)
-    //   return [ secondNextTileCoordinates, secondNextTileDirection ];
-    // }
 
     return undefined;
   }
@@ -321,19 +275,12 @@
   function setTile(newCoordinates, previousTileCoordinates) {
     let tileOptions = tileOptionsFromLastTile(newCoordinates, previousTileCoordinates);
 
-    // console.log("direction ", direction)
-    // console.log("tileOptions ", tileOptions);
     if (tileOptions == undefined) {
       return
     }
     let newTile = randomTileFromOptions(tileOptions);
-    // console.log("tileOptions", tileOptions)
-    // console.log("newTile ", newTile);
-    // console.log("direction ", direction)
 
     grid[newCoordinates[0]][newCoordinates[1]] = newTile;
-    // console.log("wrote")
-    // grid[newCoordinates[0]][newCoordinates[1]] = horizontalLeftRight
   }
 
   function randomTileFromOptions(tileOptions) {
@@ -344,8 +291,7 @@
   }
 
   // build the maze
-  let gridComplete = false;
-  while (gridComplete === false) {
+  while (true) {
     if (gridIncomplete() === false) {
       break
     }
@@ -366,27 +312,15 @@
       break
     }
 
-    // let nextTileCoordinates = coordinatesAndDirection
-    // let direction = coordinatesAndDirection[1]
     let previousTileCoordinates = startingTile
 
     while (nextTileCoordinates !== undefined) {
-    // for (let i=0; i < 3; i++) {
-    // while (true) {
-      // need to recursively call a function that sets the new tile and breaks when it hits a wall
-      // need to know last coordinates to know what tile to set
-
       setTile(nextTileCoordinates, previousTileCoordinates);
+
       previousTileCoordinates = nextTileCoordinates
       nextTileCoordinates = getNextTileCoordinates(nextTileCoordinates)
 
       if (nextTileCoordinates === undefined) {
-        
-        // nextTileCoordinates = coordinatesAndDirection[0]
-        // console.log("nextTileCoordinates ", nextTileCoordinates)
-        // direction = coordinatesAndDirection[1]
-      // } else {
-        console.log("broke")
         break
       }
     }
