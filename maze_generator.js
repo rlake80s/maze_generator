@@ -22,7 +22,7 @@
   const verticalDownDeadEnd = 'vd-'
   const verticalUpDeadEnd = 'vu-'
 
-  const horizontalRightTiles = [horizontalRightLeft, horizontalRightTurnUp, horizontalRightTurnDown] 
+  const horizontalRightTiles = [horizontalRightLeft, horizontalRightTurnUp, horizontalRightTurnDown]
   const horizontalLeftTiles = [horizontalLeftRight, horizontalLeftTurnUp, horizontalLeftTurnDown]
 
   const verticalUpTiles = [verticalUpDown, verticalUpTurnLeft, verticalUpTurnRight]
@@ -61,10 +61,9 @@
     let randRow = Math.floor(Math.random() * gridHeight)
     let randColumn = Math.floor(Math.random() * gridWidth)
 
-    if (!(randColumn === 0 || randColumn === gridWidth)) {
-      randColumn = randColumn > (gridWidth / 2) ? gridWidth : 0
+    if (!(leftEdgeTile(randColumn) || rightEdgeTile(randColumn))) {
+      randColumn = randColumn > ((gridWidth - 1) / 2) ? gridWidth - 1 : 0
     }
-    
     return [randRow, randColumn]
   }
 
@@ -73,7 +72,7 @@
   }
 
   function bottomEdgeTile(rowCoordinate) {
-    return rowCoordinate + 1 > gridHeight
+    return rowCoordinate + 1 >= gridHeight
   }
 
   function leftEdgeTile(columnCoordinate) {
@@ -81,12 +80,12 @@
   }
 
   function rightEdgeTile(columnCoordinate) {
-    return columnCoordinate + 1 > gridWidth
+    return columnCoordinate + 1 >= gridWidth
   }
 
   function tileOptionsBasedOnStart(startingTileRow, startingTileColumn) {
     let tileOptions = [];
-    
+
     if (topEdgeTile(startingTileRow)) {
       tileOptions.push(verticalUpDown);
       tileOptions.push(verticalUpTurnLeft);
@@ -107,20 +106,24 @@
       if (!(topEdgeTile(startingTileRow))) {
         tileOptions.push(horizontalLeftTurnUp);
       }
-      tileOptions = tileOptions.filter(function(e) { return e !== verticalDownTurnLeft})
+      tileOptions = tileOptions.filter(function (e) {
+        return e !== verticalDownTurnLeft
+      })
     }
 
     if (rightEdgeTile(startingTileColumn)) {
       tileOptions.push(horizontalRightLeft);
-      if (!(topEdgeTile(startingTileRow))){
-        tileOptions.push(horizontalRightTurnUp); 
+      if (!(topEdgeTile(startingTileRow))) {
+        tileOptions.push(horizontalRightTurnUp);
       }
       if (!(bottomEdgeTile(startingTileRow))) {
         tileOptions.push(horizontalRightTurnDown);
       }
-      tileOptions = tileOptions.filter(function(e) { return e !== verticalUpTurnRight})
+      tileOptions = tileOptions.filter(function (e) {
+        return e !== verticalUpTurnRight
+      })
     }
-    
+
     return tileOptions;
   }
 
@@ -131,19 +134,27 @@
     const bottomWallCrashTiles = ['vud', 'hld', 'hrd']
 
     if (topEdgeTile(tileCoordinates[0])) {
-      tileOptions = tileOptions.filter(function(e) { return !topWallCrashTiles.includes(e)})
+      tileOptions = tileOptions.filter(function (e) {
+        return !topWallCrashTiles.includes(e)
+      })
     }
-  
+
     if (bottomEdgeTile(tileCoordinates[0])) {
-      tileOptions = tileOptions.filter(function(e) { return !bottomWallCrashTiles.includes(e)})
+      tileOptions = tileOptions.filter(function (e) {
+        return !bottomWallCrashTiles.includes(e)
+      })
     }
-  
+
     if (leftEdgeTile(tileCoordinates[1])) {
-      tileOptions = tileOptions.filter(function(e) { return !leftWallCrashTiles.includes(e)})
+      tileOptions = tileOptions.filter(function (e) {
+        return !leftWallCrashTiles.includes(e)
+      })
     }
-  
+
     if (rightEdgeTile(tileCoordinates[1])) {
-      tileOptions = tileOptions.filter(function(e) { return !rightWallCrashTiles.includes(e)})
+      tileOptions = tileOptions.filter(function (e) {
+        return !rightWallCrashTiles.includes(e)
+      })
     }
 
     return tileOptions
@@ -165,26 +176,26 @@
       [verticalDownDirection]: verticalDownTiles,
     }
 
-    let tileOptions =  directions[direction]
+    let tileOptions = directions[direction]
     tileOptions = filterOutWalls(tileOptions, newTile)
     return tileOptions
   }
 
   function getNextTileOptions(tile) {
     const nextTileMap = {
-      [horizontalLeftRight]: [0,1],
-      [horizontalRightLeft]: [0,-1],
-      [horizontalLeftTurnUp]: [-1,0],
-      [horizontalLeftTurnDown]: [1,0],
-      [horizontalRightTurnUp]: [-1,0],
-      [horizontalRightTurnDown]: [1,0],
+      [horizontalLeftRight]: [0, 1],
+      [horizontalRightLeft]: [0, -1],
+      [horizontalLeftTurnUp]: [-1, 0],
+      [horizontalLeftTurnDown]: [1, 0],
+      [horizontalRightTurnUp]: [-1, 0],
+      [horizontalRightTurnDown]: [1, 0],
 
-      [verticalUpDown]: [1,0],
-      [verticalDownUp]: [-1,0],
-      [verticalDownTurnLeft]: [0,-1],
-      [verticalDownTurnRight]: [0,1],
-      [verticalUpTurnLeft]: [0,-1],
-      [verticalUpTurnRight]: [0,1]
+      [verticalUpDown]: [1, 0],
+      [verticalDownUp]: [-1, 0],
+      [verticalDownTurnLeft]: [0, -1],
+      [verticalDownTurnRight]: [0, 1],
+      [verticalUpTurnLeft]: [0, -1],
+      [verticalUpTurnRight]: [0, 1]
     }
 
     return nextTileMap[tile];
@@ -240,7 +251,9 @@
     }
 
     if (previousTile !== undefined) {
-      nextTileCoordinates = nextTileCoordinates.filter(function(e) { return e !== [previousTile[0], previousTile[1]]})
+      nextTileCoordinates = nextTileCoordinates.filter(function (e) {
+        return e !== [previousTile[0], previousTile[1]]
+      })
     }
 
     return nextTileCoordinates[0]
@@ -258,13 +271,13 @@
 
     let nextTileMod = getNextTileOptions(lastTile);
     let nextTileCoordinates = calculateNextTileCoordinates(tileRow, tileColumn, nextTileMod)
-   
+
     if (nextTileCoordinates === undefined) {
       return
     }
 
     let nextTile = grid[nextTileCoordinates[0]][nextTileCoordinates[1]]
-    
+
     if (nextTile === blankTile) {
       return nextTileCoordinates;
     }
@@ -296,8 +309,7 @@
       break
     }
 
-    // let startingTile = randomEdgeTile();
-    let startingTile = [0,0]
+    let startingTile = randomEdgeTile();
     let startingTileRow = startingTile[0];
     let startingTileColumn = startingTile[1];
 
@@ -330,5 +342,3 @@
 
 
   console.log(grid)
-
-
