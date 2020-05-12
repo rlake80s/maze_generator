@@ -305,42 +305,83 @@
     return tileOptions[Math.floor(Math.random() * tileOptions.length)]
   }
 
-  // build the maze
-  while (true) {
-    if (gridIncomplete() === false) {
-      break
+  function stringToImageTileMapper(tile) {
+    const imageMap = {
+      [horizontalLeftRight]: 'tiles/horizontal_straight.png',
+      [horizontalRightLeft]: 'tiles/horizontal_straight.png',
+      [horizontalLeftTurnUp]: 'tiles/left_up.png',
+      [horizontalLeftTurnDown]: 'tiles/left_down.png',
+      [horizontalRightTurnUp]: 'tiles/right_up.png',
+      [horizontalRightTurnDown]: 'tiles/right_down.png',
+      [verticalUpDown]: 'tiles/vertical_straight.png',
+      [verticalDownUp]: 'tiles/vertical_straight.png',
+      [verticalDownTurnLeft]: 'tiles/left_down.png',
+      [verticalDownTurnRight]: 'tiles/right_down.png',
+      [verticalUpTurnLeft]: 'tiles/left_up.png',
+      [verticalUpTurnRight]: 'tiles/right_up.png',
+      [blankTile]: 'tiles/blank.png'
+
     }
 
-    let startingTile = randomEdgeTile();
-    let startingTileRow = startingTile[0];
-    let startingTileColumn = startingTile[1];
-
-    let tileOptions = tileOptionsBasedOnStart(startingTileRow, startingTileColumn);
-    let firstTile = randomTileFromOptions(tileOptions);
-
-    grid[startingTileRow][startingTileColumn] = firstTile;
-
-    let nextTileCoordinates = getNextTileCoordinates(startingTile);
-
-    if (nextTileCoordinates == undefined) {
-      break
-    }
-
-    let previousTileCoordinates = startingTile
-
-    while (nextTileCoordinates !== undefined) {
-      setTile(nextTileCoordinates, previousTileCoordinates);
-
-      previousTileCoordinates = nextTileCoordinates
-      nextTileCoordinates = getNextTileCoordinates(nextTileCoordinates)
-
-      if (nextTileCoordinates === undefined) {
-        break
-      }
-    }
-    break
+    return imageMap[tile]
   }
 
+  window.onload = function () {
+    // build the maze
+    while (true) {
+      if (gridIncomplete() === false) {
+        break
+      }
 
+      let startingTile = randomEdgeTile();
+      let startingTileRow = startingTile[0];
+      let startingTileColumn = startingTile[1];
 
-  console.log(grid)
+      let tileOptions = tileOptionsBasedOnStart(startingTileRow, startingTileColumn);
+      let firstTile = randomTileFromOptions(tileOptions);
+
+      grid[startingTileRow][startingTileColumn] = firstTile;
+
+      let previousTileCoordinates = startingTile;
+      let nextTileCoordinates = getNextTileCoordinates(startingTile);
+
+      while (nextTileCoordinates !== undefined) {
+        setTile(nextTileCoordinates, previousTileCoordinates);
+
+        previousTileCoordinates = nextTileCoordinates;
+        nextTileCoordinates = getNextTileCoordinates(nextTileCoordinates);
+      }
+      break
+    }
+
+    console.log(grid)
+
+    // write the maze to the dom
+    let mazeDiv = document.createElement("div");
+    mazeDiv.setAttribute('class', 'maze-container');
+    document.body.appendChild(mazeDiv);
+
+    // create dynamic css grid size
+    let columnTemplate = 'auto ';
+    let columnsInit = (columnTemplate.repeat(gridWidth)).trim();
+    let style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = `.maze-container { display: inline-grid; grid-template-columns: ${columnsInit}; background-color: black; }`;
+    document.head.appendChild(style)
+
+    // fill in the maze with image assets based on grid values
+    for (row of grid) {
+      for (tile of row) {
+        let tileDiv = document.createElement("div");
+        tileDiv.setAttribute('class', 'tile-item');
+        tileDiv.setAttribute('value', 'hi')
+        mazeDiv.appendChild(tileDiv);
+
+        let imageSrc = document.createElement("img");
+        imageSrc.setAttribute('src', stringToImageTileMapper(tile));
+        imageSrc.setAttribute('height', '50px');
+        imageSrc.setAttribute('width', '50px');
+        tileDiv.appendChild(imageSrc);
+      }
+    }
+  }
