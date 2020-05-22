@@ -1,7 +1,7 @@
 const gridHeight = 10;
 const gridWidth = 10;
 
-const forkRatio = 0.5
+const forkRatio = 0.9
 const numForkedPaths = gridHeight * gridWidth * forkRatio
 
 // horizontal tiles
@@ -11,8 +11,6 @@ const horizontalLeftTurnUp = 'hlu'
 const horizontalLeftTurnDown = 'hld'
 const horizontalRightTurnUp = 'hru'
 const horizontalRightTurnDown = 'hrd'
-const horizontalLeftDeadEnd = 'hl|'
-const horizontalRightDeadEnd = 'hr|'
 
 // vertical tiles
 const verticalUpDown = 'vud'
@@ -21,8 +19,6 @@ const verticalDownTurnLeft = 'vdl'
 const verticalDownTurnRight = 'vdr'
 const verticalUpTurnLeft = 'vul'
 const verticalUpTurnRight = 'vur'
-const verticalDownDeadEnd = 'vd-'
-const verticalUpDeadEnd = 'vu-'
 
 // horizontal forked tiles
 // alphabetically sorted after direction
@@ -60,8 +56,6 @@ const horizontalLeftTiles = [horizontalLeftRight, horizontalLeftTurnUp, horizont
 const verticalUpTiles = [verticalUpDown, verticalUpTurnLeft, verticalUpTurnRight]
 const verticalDownTiles = [verticalDownUp, verticalDownTurnLeft, verticalDownTurnRight]
 
-const deadEndTiles = [horizontalLeftDeadEnd, horizontalRightDeadEnd, verticalDownDeadEnd, verticalUpDeadEnd]
-
 const horizontalLeftDirection = 'hl'
 const horizontalRightDirection = 'hr'
 const verticalUpDirection = 'vu'
@@ -90,6 +84,19 @@ function gridIncomplete() {
     }
   }
   return false;
+}
+
+function setGridTile(coordinates, tile) {
+  grid[coordinates[0]][coordinates[1]] = tile;
+}
+
+function getGridTile(coordinates) {
+  try {
+    return grid[coordinates[0]][coordinates[1]];
+  } catch {
+    debugger
+  }
+
 }
 
 function noCoordinatesAtEdge(coordinates) {
@@ -270,9 +277,12 @@ function getDirection(newCoordinates, oldCoordinates) {
   }
 }
 
-function calculateNextTileCoordinates(startingTileRow, startingTileColumn, modCoordinates) {
+function calculateNextTileCoordinates(coordinates, modCoordinates) {
   let rowMod = modCoordinates[0];
   let columnMod = modCoordinates[1];
+
+  let startingTileRow = coordinates[0];
+  let startingTileColumn = coordinates[1];
 
   let newRowTile = startingTileRow + rowMod;
   let newColumnTile = startingTileColumn + columnMod;
@@ -285,23 +295,16 @@ function calculateNextTileCoordinates(startingTileRow, startingTileColumn, modCo
 }
 
 function getNextTileCoordinates(tile) {
-  let tileRow = tile[0]
-  let tileColumn = tile[1]
-
-  let lastTile = grid[tileRow][tileColumn]
-
-  if (deadEndTiles.includes(lastTile)) {
-    return undefined;
-  }
+  let lastTile = getGridTile(tile)
 
   let nextTileMod = getNextTileOptions(lastTile);
-  let nextTileCoordinates = calculateNextTileCoordinates(tileRow, tileColumn, nextTileMod)
+  let nextTileCoordinates = calculateNextTileCoordinates(tile, nextTileMod)
 
   if (nextTileCoordinates === undefined) {
     return
   }
 
-  let nextTile = grid[nextTileCoordinates[0]][nextTileCoordinates[1]]
+  let nextTile = getGridTile(nextTileCoordinates)
 
   if (nextTile === blankTile) {
     return nextTileCoordinates;
@@ -318,7 +321,7 @@ function setTile(newCoordinates, previousTileCoordinates) {
   }
   let newTile = randomTileFromOptions(tileOptions);
 
-  grid[newCoordinates[0]][newCoordinates[1]] = newTile;
+  setGridTile(newCoordinates, newTile)
 }
 
 function randomTileFromOptions(tileOptions) {
@@ -375,16 +378,20 @@ function stringToImageTileMapper(tile) {
 function forkedCoordinateNextCoordinate(coordinates) {
   let blankSurroundingTiles = []
 
-  if (coordinates[1] + 1 <= gridWidth - 1 && grid[coordinates[0]][coordinates[1] + 1] === blankTile) {
+  // in bounds and blank
+  if (coordinates[1] + 1 <= gridWidth - 1 && getGridTile([coordinates[0], coordinates[1] + 1]) === blankTile) {
     blankSurroundingTiles.push([coordinates[0], coordinates[1] + 1])
   }
-  if (coordinates[1] + 1 >= 0 && grid[coordinates[0]][coordinates[1] - 1] === blankTile) {
+  // in bounds and blank
+  if (coordinates[1] + 1 >= 0 && getGridTile([coordinates[0], coordinates[1] - 1]) === blankTile) {
     blankSurroundingTiles.push([coordinates[0], coordinates[1] - 1])
   }
-  if (coordinates[0] + 1 <= gridHeight - 1 && grid[coordinates[0] + 1][coordinates[1]] === blankTile) {
+  // in bounds and blank
+  if (coordinates[0] + 1 <= gridHeight - 1 && getGridTile([coordinates[0] + 1, coordinates[1]]) === blankTile) {
     blankSurroundingTiles.push([coordinates[0] + 1, coordinates[1]])
   }
-  if (coordinates[0] - 1 >= 0 && grid[coordinates[0] - 1][coordinates[1]] === blankTile) {
+  // in bounds and blank
+  if (coordinates[0] - 1 >= 0 && getGridTile([coordinates[0] - 1, coordinates[1]]) === blankTile) {
     blankSurroundingTiles.push([coordinates[0] - 1, coordinates[1]])
   }
 
@@ -398,7 +405,7 @@ function alphabeticallySortString(string) {
 }
 
 function getForkedTile(newCoordinates, forkedCoordinates) {
-  let forkedTile = grid[forkedCoordinates[0]][forkedCoordinates[1]];
+  let forkedTile = getGridTile(forkedCoordinates)
   let forkedTileWithoutDirection = alphabeticallySortString(forkedTile.substr(1))
   let tileDirection = getDirection(forkedCoordinates, newCoordinates)
 
@@ -504,7 +511,7 @@ function getConnectingPathCoordinates(tileCoordinates, endPath) {
       return false;
     }
     // remove any blank tiles
-    let tileValue = grid[tile[0]][tile[1]]
+    let tileValue = getGridTile(tile)
     if (tileValue === blankTile) {
       return false;
     }
@@ -517,9 +524,11 @@ function getConnectingPathCoordinates(tileCoordinates, endPath) {
 
 function getConnectingTile(startingTile, connectingTile) {
   let direction = getDirection(connectingTile, startingTile)
-  let existingTile = grid[connectingTile[0]][connectingTile[1]];
-  let existingTileNoDirection = existingTile.slice(1, existingTile.length - 1)
-
+  let existingTile = getGridTile(connectingTile);
+  if (existingTile === undefined) {
+    debugger;
+  }
+  let existingTileNoDirection = existingTile.substr(1)
   let updatedTile = direction.concat(alphabeticallySortString(existingTileNoDirection));
 
   return updatedTile;
@@ -536,6 +545,11 @@ function directionToCoordinateMod(direction) {
   return directionMap[direction];
 }
 
+function isTileDeadEnd(coordinates) {
+  let nextTiles = getNextTiles(coordinates)
+  return nextTiles.length < 2;
+}
+
 window.onload = function () {
   // build the maze
   let firstPath = []
@@ -545,11 +559,12 @@ window.onload = function () {
   let startingTileColumn = startingTileCoordinates[1];
 
   let endingTileCoordinates = randomEndTile(startingTileCoordinates)
+  console.log("endingTileCoordinates ", endingTileCoordinates);
 
   let tileOptions = tileOptionsBasedOnStart(startingTileRow, startingTileColumn);
   let firstTile = randomTileFromOptions(tileOptions);
 
-  grid[startingTileRow][startingTileColumn] = firstTile;
+  setGridTile(startingTileCoordinates, firstTile);
 
   firstPath.push(startingTileCoordinates)
 
@@ -586,6 +601,7 @@ window.onload = function () {
       }
     }
 
+    // don't create any forked path that don't have a second tile in the path
     if (nextCoordinates == undefined) {
       if (paths.length > 1) {
         paths.splice(startingPathIndex, 1);
@@ -593,10 +609,15 @@ window.onload = function () {
       continue;
     }
 
+    // don't fork any dead ends
+    if (isTileDeadEnd(forkedCoordinates)) {
+      continue;
+    }
+
     let forkedTile = getForkedTile(nextCoordinates, forkedCoordinates);
     let previousCoordinates = forkedCoordinates;
 
-    grid[forkedCoordinates[0]][forkedCoordinates[1]] = forkedTile;
+    setGridTile(forkedCoordinates, forkedTile);
 
     while (nextCoordinates !== undefined) {
       newPath.push(nextCoordinates);
@@ -615,7 +636,7 @@ window.onload = function () {
     }
   }
 
-  let endingTile = grid[endingTileCoordinates[0]][endingTileCoordinates[1]]
+  let endingTile = getGridTile(endingTileCoordinates)
 
   let endingTileRow = endingTileCoordinates[0]
   let endingTileColumn = endingTileCoordinates[1]
@@ -631,7 +652,7 @@ window.onload = function () {
     // write tile as a normal tile so it can be read to get the next tile coordindates
     // then overwrite it once we have them
     // might want to change this behaviour later
-    grid[endingTileRow][endingTileColumn] = endTile;
+    setGridTile(endingTileCoordinates, endTile)
 
     let nextCoordinates = getNextTileCoordinates(endingTileCoordinates);
     let previousCoordinates = endingTileCoordinates;
@@ -639,9 +660,10 @@ window.onload = function () {
     let endTileDirectionFlipped = endTile[0].concat(endTile[2]).concat(endTile[1])
 
     let terminalEndTile = getTerminalTile(endTileDirectionFlipped)
-    grid[endingTileRow][endingTileColumn] = terminalEndTile;
+    setGridTile(endingTileCoordinates, terminalEndTile)
 
     if (nextCoordinates == undefined) {
+      // debugger;
       let terminalTileDirection = terminalEndTile[0]
       let coordinateMod = directionToCoordinateMod(terminalTileDirection);
 
@@ -649,10 +671,7 @@ window.onload = function () {
 
       let connectingTile = getConnectingTile(previousCoordinates, connectingTileCoordinates);
 
-      let connectingTileRow = connectingTileCoordinates[0]
-      let connectingTileColumn = connectingTileCoordinates[1]
-
-      grid[connectingTileRow][connectingTileColumn] = connectingTile;
+      setGridTile(connectingTileCoordinates, connectingTile)
     }
 
     while (nextCoordinates !== undefined) {
@@ -666,17 +685,15 @@ window.onload = function () {
 
         let connectingTile = getConnectingTile(previousCoordinates, connectingTileCoordinates);
 
-        let connectingTileRow = connectingTileCoordinates[0]
-        let connectingTileColumn = connectingTileCoordinates[1]
-
-        grid[connectingTileRow][connectingTileColumn] = connectingTile;
+        setGridTile(connectingTileCoordinates, connectingTile)
       }
     }
   } else {
     // make tile a terminal end point
-    let endTile = grid[endingTileRow][endingTileColumn]
+    let endTile = getGridTile(endingTileCoordinates)
     let terminalEndTile = getTerminalTile(endTile)
-    grid[endingTileRow][endingTileColumn] = terminalEndTile;
+
+    setGridTile(endingTileCoordinates, terminalEndTile)
   }
 
 
@@ -709,4 +726,210 @@ window.onload = function () {
       tileDiv.appendChild(imageSrc);
     }
   }
+
+  // run the maze
+
+  let currentCoordinates = startingTileCoordinates;
+  let pastCoordinates = getStartingOutOfBoundCoordinates(startingTileCoordinates)
+  let currentPath = []
+
+  let nextTiles = getNextTiles(currentCoordinates, pastCoordinates)
+
+  let forkedPaths = []
+
+  let defaultPathObject = {
+    currentCoordinates: [],
+    currentPath: [],
+    pastCoordinates: []
+  }
+
+  for (coordinates of nextTiles) {
+    let movePath = cloneObject(defaultPathObject);
+
+    movePath.currentCoordinates = coordinates;
+    movePath.pastCoordinates = currentCoordinates;
+    movePath.currentPath.push(currentCoordinates);
+    movePath.currentPath.push(coordinates);
+
+    forkedPaths.push(movePath);
+  }
+
+  while (forkedPaths.length > 0) {
+    let forkedPath = forkedPaths.pop();
+
+    currentCoordinates = forkedPath.currentCoordinates;
+    pastCoordinates = forkedPath.pastCoordinates;
+    currentPath = cloneObject(forkedPath.currentPath);
+
+    if (coordinatesEqual(currentCoordinates, endingTileCoordinates)) {
+      console.log("currentCoordinates ", currentCoordinates);
+      console.log("currentPath ", forkedPath.currentPath);
+      break
+    }
+
+    nextTiles = getNextTiles(currentCoordinates, pastCoordinates)
+
+    if (nextTiles.length === 0) {
+      continue;
+    }
+
+    for (coordinates of nextTiles) {
+      let movePath = cloneObject(defaultPathObject);
+      let path = cloneObject(currentPath);
+      path.push(coordinates);
+
+      movePath.currentCoordinates = coordinates;
+      movePath.pastCoordinates = currentCoordinates;
+      movePath.currentPath = path;
+
+      forkedPaths.push(movePath);
+    }
+  }
+}
+
+// maze runner functions
+
+// function getPossibleMoves(coordinates, pastCoordinates) {
+//   let tile = getGridTile(coordinates)
+
+//   let possibleCoordinatesMod = getCoordinateModFromTile(tile);
+//   let possibleCoordinates = getPossibleCoordinatesFromMod(possibleCoordinatesMod, coordinates, pastCoordinates)
+
+//   return possibleCoordinates;
+// }
+
+function getCoordinateModFromTile(tile) {
+  const directionMap = {
+    l: [0, -1],
+    r: [0, 1],
+    d: [1, 0],
+    u: [-1, 0],
+  }
+
+  let tileDirectionsArray = getTileDirectionsArray(tile)
+
+  let coordinatesMod = tileDirectionsArray.map(e => directionMap[e])
+  return coordinatesMod;
+}
+
+function getPossibleCoordinatesFromMod(modArray, coordinates, pastCoordinates) {
+  let possibleCoordinates = [];
+
+  let row = coordinates[0]
+  let column = coordinates[1]
+
+  for (mod of modArray) {
+    let modRow = mod[0]
+    let modColumn = mod[1]
+
+    let moddedRow = row + modRow
+    let moddedColumn = column + modColumn
+
+    possibleCoordinates.push([moddedRow, moddedColumn])
+  }
+
+  if (!(pastCoordinates === undefined)) {
+    possibleCoordinates = possibleCoordinates.filter(e => !coordinatesEqual(e, pastCoordinates))
+  }
+
+  return possibleCoordinates;
+}
+
+function getStartingOutOfBoundCoordinates(startingCoordinates) {
+  let startingTile = getGridTile(startingCoordinates)
+  let coordinatesMod = getCoordinateModFromTile(startingTile)
+  let possibleCoordinates = getPossibleCoordinatesFromMod(coordinatesMod, startingCoordinates)
+
+  let startingOutOfBoundCoordinates = possibleCoordinates.find(e => coordinatesOutOfBounds(e))
+
+  return startingOutOfBoundCoordinates;
+}
+
+function coordinatesOutOfBounds(coordinates) {
+  let row = coordinates[0];
+  let column = coordinates[1];
+
+  if (row < 0) {
+    return true
+  }
+  if (column < 0) {
+    return true
+  }
+  if (row > gridHeight - 1) {
+    return true
+  }
+  if (column > gridWidth - 1) {
+    return true
+  }
+  return false
+}
+
+function getTileDirectionsArray(tile) {
+  const directionsArray = ['v', 'h', 't']
+  if (tile === undefined) {
+    return [];
+  } else {
+    return tile.split('').filter(e => !directionsArray.includes(e));
+  }
+}
+
+function nextTileConnectsToCurrentTile(direction, nextTileCoordinates) {
+  let nextTile = getGridTile(nextTileCoordinates);
+  let nextTileDirections = getTileDirectionsArray(nextTile)
+
+  const connectingTilesMap = {
+    l: 'r',
+    r: 'l',
+    u: 'd',
+    d: 'u'
+  }
+
+  nextTileDirections = nextTileDirections.map(e => connectingTilesMap[e])
+
+  if (nextTileDirections.includes(direction)) {
+    return true
+  }
+  return false;
+}
+
+function getNextTileCoordinateOptions(tile, coordinates, previousCoordinates) {
+  let nextTileCoordinatesOptions = [];
+
+  let tileDirectionsObject = getTileDirectionsArray(tile).map(e => ({
+    direction: e,
+    mod: directionToCoordinateMod(e)
+  }));
+
+  for (tile of tileDirectionsObject) {
+    let direction = tile.direction
+    let modCoordinates = tile.mod
+
+    let nextTileCoordinates = calculateNextTileCoordinates(coordinates, modCoordinates)
+
+    if (nextTileCoordinates === undefined) {
+      continue
+    }
+    if (coordinatesOutOfBounds(nextTileCoordinates)) {
+      continue
+    }
+    if (previousCoordinates !== undefined && coordinatesEqual(nextTileCoordinates, previousCoordinates)) {
+      continue
+    }
+    if (nextTileConnectsToCurrentTile(direction, nextTileCoordinates)) {
+      nextTileCoordinatesOptions.push(nextTileCoordinates);
+    }
+  }
+  return nextTileCoordinatesOptions;
+}
+
+function getNextTiles(coordinates, previousCoordinates) {
+  let currentTile = getGridTile(coordinates)
+
+  let nextTileOptions = getNextTileCoordinateOptions(currentTile, coordinates, previousCoordinates)
+
+  return nextTileOptions;
+}
+
+function cloneObject(obj) {
+  return JSON.parse(JSON.stringify(obj));
 }
