@@ -799,16 +799,9 @@ window.onload = function () {
 // }
 
 function getCoordinateModFromTile(tile) {
-  const directionMap = {
-    l: [0, -1],
-    r: [0, 1],
-    d: [1, 0],
-    u: [-1, 0],
-  }
-
   let tileDirectionsArray = getTileDirectionsArray(tile)
 
-  let coordinatesMod = tileDirectionsArray.map(e => directionMap[e])
+  let coordinatesMod = tileDirectionsArray.map(e => directionToCoordinateMod(e))
   return coordinatesMod;
 }
 
