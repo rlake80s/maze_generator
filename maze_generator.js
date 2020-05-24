@@ -1,5 +1,5 @@
-const gridHeight = 10;
-const gridWidth = 10;
+const gridHeight = 50;
+const gridWidth = 50;
 
 const forkRatio = 0.9
 const numForkedPaths = gridHeight * gridWidth * forkRatio
@@ -61,6 +61,14 @@ const horizontalRightDirection = 'hr'
 const verticalUpDirection = 'vu'
 const verticalDownDirection = 'vd'
 
+const up = 'u'
+const down = 'd'
+const left = 'l'
+const right = 'r'
+
+const gridTileDimension = '50';
+const rowBufferPixels = 4
+
 // collect each path in the maze
 let paths = []
 
@@ -91,12 +99,7 @@ function setGridTile(coordinates, tile) {
 }
 
 function getGridTile(coordinates) {
-  try {
-    return grid[coordinates[0]][coordinates[1]];
-  } catch {
-    debugger
-  }
-
+  return grid[coordinates[0]][coordinates[1]];
 }
 
 function noCoordinatesAtEdge(coordinates) {
@@ -663,7 +666,6 @@ window.onload = function () {
     setGridTile(endingTileCoordinates, terminalEndTile)
 
     if (nextCoordinates == undefined) {
-      // debugger;
       let terminalTileDirection = terminalEndTile[0]
       let coordinateMod = directionToCoordinateMod(terminalTileDirection);
 
@@ -701,7 +703,7 @@ window.onload = function () {
 
   // write the maze to the dom
   let mazeDiv = document.createElement("div");
-  mazeDiv.setAttribute('class', 'maze-container');
+  mazeDiv.setAttribute('id', 'maze-container');
   document.body.appendChild(mazeDiv);
 
   // create dynamic css grid size
@@ -709,7 +711,7 @@ window.onload = function () {
   let columnsInit = (columnTemplate.repeat(gridWidth)).trim();
   let style = document.createElement('style');
   style.type = 'text/css';
-  style.innerHTML = `.maze-container { display: inline-grid; grid-template-columns: ${columnsInit}; background-color: black; }`;
+  style.innerHTML = `#maze-container { display: inline-grid; grid-template-columns: ${columnsInit}; background-color: black; }`;
   document.head.appendChild(style)
 
   // fill in the maze with image assets based on grid values
@@ -721,8 +723,8 @@ window.onload = function () {
 
       let imageSrc = document.createElement("img");
       imageSrc.setAttribute('src', stringToImageTileMapper(tile));
-      imageSrc.setAttribute('height', '50px');
-      imageSrc.setAttribute('width', '50px');
+      imageSrc.setAttribute('height', gridTileDimension + 'px');
+      imageSrc.setAttribute('width', gridTileDimension + 'px');
       tileDiv.appendChild(imageSrc);
     }
   }
@@ -732,6 +734,7 @@ window.onload = function () {
   let currentCoordinates = startingTileCoordinates;
   let pastCoordinates = getStartingOutOfBoundCoordinates(startingTileCoordinates)
   let currentPath = []
+  let pathDirectionArray;
 
   let nextTiles = getNextTiles(currentCoordinates, pastCoordinates)
 
@@ -764,6 +767,8 @@ window.onload = function () {
     if (coordinatesEqual(currentCoordinates, endingTileCoordinates)) {
       console.log("currentCoordinates ", currentCoordinates);
       console.log("currentPath ", forkedPath.currentPath);
+      pathDirectionArray = generatePathDirectionArray(forkedPath.currentPath);
+      console.log("pathDirectionArray ", pathDirectionArray)
       break
     }
 
@@ -785,6 +790,181 @@ window.onload = function () {
       forkedPaths.push(movePath);
     }
   }
+
+  function startingPositionVerticalBufferPixels(rowNumber) {
+    return rowBufferPixels * rowNumber;
+  }
+
+  function renderingStartingPosition(direction) {
+    let startingRow = startingTileCoordinates[0];
+    let startingColumn = startingTileCoordinates[1];
+
+    let startingAxis;
+    const rowAxis = 'r';
+    const columnAxis = 'c';
+
+    if (startingRow === 0 && direction === down || startingRow === gridHeight - 1 && direction === up) {
+      startingAxis = rowAxis
+    }
+    if (startingColumn === gridWidth - 1 && direction === left) {
+      startingAxis = columnAxis
+    }
+
+    // -2 centers in maze corridor
+    let startingRowPixel = (startingRow * parseInt(gridTileDimension)) + startingPositionVerticalBufferPixels(startingRow);
+    let startingColumPixel = (startingColumn * parseInt(gridTileDimension));
+
+    if (startingAxis === rowAxis) {
+      startingColumPixel += (parseInt(gridTileDimension) / 2);
+      if (startingRow === gridHeight - 1) {
+        startingRowPixel += 50
+      }
+    }
+    if (startingAxis === columnAxis) {
+      startingRowPixel += (parseInt(gridTileDimension) / 2);
+      startingColumPixel += 50
+    }
+    if (startingColumn === 0 && direction === right) {
+      startingRowPixel += 25
+    }
+
+    return [startingRowPixel, startingColumPixel]
+  }
+
+  function getStartingTargetPixel(direction) {
+    const startingTargetPixel = {
+      r: gridTileDimension / 2,
+      l: canvas.width - gridTileDimension / 2,
+      u: canvas.height - gridTileDimension / 2,
+      d: gridTileDimension / 2,
+    }
+    return startingTargetPixel[direction];
+  }
+
+  function getNextPixelFromDirection(direction, posX, posY) {
+
+    const targetPixel = {
+      l: posX - 50,
+      r: posX + 50,
+      d: posY + 50 + rowBufferPixels + 0.5,
+      u: posY - 50 - rowBufferPixels - 0.5,
+    }
+    return targetPixel[direction];
+  }
+
+  // render the maze run
+  let canvas = document.createElement("canvas");
+  canvas.setAttribute('id', 'maze-canvas');
+  canvas.setAttribute('width', mazeDiv.offsetWidth)
+  canvas.setAttribute('height', mazeDiv.offsetHeight)
+  document.body.appendChild(canvas);
+
+  canvas.style.position = "absolute";
+  canvas.style.left = mazeDiv.offsetLeft + "px";
+  canvas.style.top = mazeDiv.offsetTop + "px";
+
+  let ctx = canvas.getContext("2d");
+  ctx.strokeStyle = 'Red';
+
+  // get starting pixel direction
+  let startingOutOfBoundCoordinates = getStartingOutOfBoundCoordinates(startingTileCoordinates)
+  let startingDirection = coordinatesChangeToDirection(startingOutOfBoundCoordinates, startingTileCoordinates)
+
+  let startingPixelPositions = renderingStartingPosition(startingDirection)
+  let startingTargetPixel = getStartingTargetPixel(startingDirection)
+
+  let posY = startingPixelPositions[0];
+  let posX = startingPixelPositions[1]
+
+  let lineLength = 10;
+  let lineWidth = 10;
+  let speed = 7;
+
+  function drawLine() {
+    ctx.beginPath();
+    ctx.moveTo(posX, posY);
+    ctx.lineTo(posX + lineWidth, posY + lineLength);
+    ctx.stroke();
+
+    // make the maze run line thicker at higher speeds
+    for (let i = 1; i < speed + 5; i++) {
+      if (i > 15) {
+        break
+      }
+      ctx.beginPath();
+      ctx.moveTo(posX + i, posY);
+      ctx.lineTo(posX + lineWidth, posY + lineLength);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(posX, posY + i);
+      ctx.lineTo(posX + lineWidth, posY + lineLength);
+      ctx.stroke();
+    }
+  }
+
+  function moveLine(direction, targetPixel) {
+    if (direction === 'r') {
+      posX += speed;
+      if (posX >= targetPixel) {
+        posX -= (posX - targetPixel)
+        return true;
+      }
+    }
+    if (direction === 'l') {
+      posX -= speed;
+      if (posX <= targetPixel) {
+        posX += (targetPixel - posX)
+        return true;
+      }
+    }
+    if (direction === 'u') {
+      posY -= speed;
+      if (posY <= targetPixel) {
+        posY += (targetPixel - posY)
+        return true
+      }
+    }
+    if (direction === 'd') {
+      posY += speed;
+      if (posY >= targetPixel) {
+        posY -= (posY - targetPixel)
+        return true
+      }
+    }
+  }
+
+  function drawFirstLine() {
+    let done = moveLine(startingDirection, startingTargetPixel);
+    drawLine();
+    if (done === true) {
+      drawPath()
+      return
+    }
+    requestAnimationFrame(drawFirstLine);
+  }
+
+  function drawTile(direction, targetPixel) {
+    let done = moveLine(direction, targetPixel);
+    drawLine();
+    if (done === true) {
+      drawPath()
+      return
+    }
+    requestAnimationFrame(() => {
+      drawTile(direction, targetPixel)
+    });
+  }
+
+  function drawPath() {
+    let direction = pathDirectionArray.shift();
+    let targetPixel = getNextPixelFromDirection(direction, posX, posY)
+    drawTile(direction, targetPixel)
+    if (pathDirectionArray.length <= 0) {
+      return;
+    }
+  }
+
+  drawFirstLine()
 }
 
 // maze runner functions
@@ -925,4 +1105,32 @@ function getNextTiles(coordinates, previousCoordinates) {
 
 function cloneObject(obj) {
   return JSON.parse(JSON.stringify(obj));
+}
+
+function generatePathDirectionArray(pathArray) {
+  let pathDirectionArray = [];
+  for (let i = 0, k = 1; k < pathArray.length; i++, k++) {
+    let start = pathArray[i];
+    let end = pathArray[k];
+    pathDirectionArray.push(coordinatesChangeToDirection(start, end))
+  }
+  return pathDirectionArray;
+}
+
+function coordinatesChangeToDirection(startingCoordinate, endingCoordinate) {
+  let rowMod = endingCoordinate[0] - startingCoordinate[0];
+  let columnMod = endingCoordinate[1] - startingCoordinate[1];
+
+  if (rowMod === 1) {
+    return down;
+  }
+  if (rowMod === -1) {
+    return up;
+  }
+  if (columnMod === 1) {
+    return right;
+  }
+  if (columnMod === -1) {
+    return left;
+  }
 }
