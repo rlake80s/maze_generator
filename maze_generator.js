@@ -67,7 +67,7 @@ const left = 'l'
 const right = 'r'
 
 const gridTileDimension = '50';
-const rowBufferPixels = 4
+const rowBufferPixels = 4.492 
 
 // collect each path in the maze
 let paths = []
@@ -792,7 +792,7 @@ window.onload = function () {
   }
 
   function startingPositionVerticalBufferPixels(rowNumber) {
-    return rowBufferPixels * rowNumber;
+    return rowBufferPixels * (rowNumber - 1);
   }
 
   function renderingStartingPosition(direction) {
@@ -810,7 +810,6 @@ window.onload = function () {
       startingAxis = columnAxis
     }
 
-    // -2 centers in maze corridor
     let startingRowPixel = (startingRow * parseInt(gridTileDimension)) + startingPositionVerticalBufferPixels(startingRow);
     let startingColumPixel = (startingColumn * parseInt(gridTileDimension));
 
@@ -846,8 +845,8 @@ window.onload = function () {
     const targetPixel = {
       l: posX - 50,
       r: posX + 50,
-      d: posY + 50 + rowBufferPixels + 0.5,
-      u: posY - 50 - rowBufferPixels - 0.5,
+      d: posY + 50 + rowBufferPixels,
+      u: posY - 50 - rowBufferPixels,
     }
     return targetPixel[direction];
   }
