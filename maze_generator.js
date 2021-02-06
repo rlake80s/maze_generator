@@ -67,7 +67,7 @@ const left = 'l'
 const right = 'r'
 
 const gridTileDimension = '50';
-const rowBufferPixels = 4.492 
+const rowBufferPixels = 3.95 
 
 // collect each path in the maze
 let paths = []
